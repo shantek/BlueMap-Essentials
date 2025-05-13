@@ -140,6 +140,7 @@ public final class BlueMapEssentials extends JavaPlugin {
 
     private void addWarpMarkers() {
         IWarps warps = essentials.getWarps();
+
         for (final String warp : warps.getList()) {
             final Location warpLocation;
             try {
@@ -147,38 +148,60 @@ public final class BlueMapEssentials extends JavaPlugin {
             } catch (WarpNotFoundException | InvalidWorldException e) {
                 continue;
             }
+
             World warpWorld = warpLocation.getWorld();
-            if (warpWorld == null) {
-                continue;
-            }
-            blueMap.getWorld(warpWorld.getUID()).ifPresent(blueWorld -> blueWorld.getMaps().forEach(map -> {
-                final MarkerSet markerSetWarps = map.getMarkerSets().getOrDefault(MARKERSET_ID_WARPS, MarkerSet.builder().label(MARKERSET_LABEL_WARPS).build());
-                String warpMarkerId = String.format("warp:%s:%s", map.getName(), warp);
-                Vector3d warpMarkerPos = Vector3d.from(warpLocation.getX(), warpLocation.getY(), warpLocation.getZ());
-                POIMarker warpMarker = POIMarker.builder()
-                        .label(warpLabelFormat.replace("%warp%", warp))
-                        .icon(getMarkerURL(map, ICON_ID_WARPS), Vector2i.from(19, 19))
-                        .position(warpMarkerPos)
-                        .build();
-                markerSetWarps.getMarkers().put(warpMarkerId, warpMarker);
-                map.getMarkerSets().put(MARKERSET_ID_WARPS, markerSetWarps);
-            }));
+            if (warpWorld == null) continue;
+
+            blueMap.getWorld(warpWorld.getUID()).ifPresent(blueWorld ->
+                    blueWorld.getMaps().forEach(map -> {
+
+                        // Ensure marker set exists and is configured properly
+                        MarkerSet markerSetWarps = map.getMarkerSets().get(MARKERSET_ID_WARPS);
+                        if (markerSetWarps == null) {
+                            markerSetWarps = MarkerSet.builder()
+                                    .label(MARKERSET_LABEL_WARPS)
+                                    .defaultHidden(true)
+                                    .toggleable(true)
+                                    .build();
+                            map.getMarkerSets().put(MARKERSET_ID_WARPS, markerSetWarps);
+                        }
+
+                        String warpMarkerId = String.format("warp:%s:%s", map.getName(), warp);
+                        Vector3d warpMarkerPos = Vector3d.from(
+                                warpLocation.getX(),
+                                warpLocation.getY(),
+                                warpLocation.getZ()
+                        );
+
+                        POIMarker warpMarker = POIMarker.builder()
+                                .label(warpLabelFormat.replace("%warp%", warp))
+                                .icon(getMarkerURL(map, ICON_ID_WARPS), Vector2i.from(19, 19))
+                                .position(warpMarkerPos)
+                                .build();
+
+                        markerSetWarps.getMarkers().put(warpMarkerId, warpMarker);
+                    })
+            );
         }
     }
+
 
     private void addHomeMarkers() {
         final UserMap userMap = essentials.getUserMap();
         final Collection<UUID> users;
+
         if (homesOnlinePlayersOnly) {
-            users = getServer().getOnlinePlayers().stream().map(Player::getUniqueId).collect(Collectors.toSet());
+            users = getServer().getOnlinePlayers().stream()
+                    .map(Player::getUniqueId)
+                    .collect(Collectors.toSet());
         } else {
             users = userMap.getAllUniqueUsers();
         }
+
         for (UUID uuid : users) {
             final User user = userMap.getUser(uuid);
-            if (user == null) {
-                continue;
-            }
+            if (user == null) continue;
+
             for (final String home : user.getHomes()) {
                 final Location homeLocation;
                 try {
@@ -186,37 +209,47 @@ public final class BlueMapEssentials extends JavaPlugin {
                 } catch (Exception e) {
                     continue;
                 }
-                if (homeLocation == null) {
-                    continue;
-                }
-                World homeWorld = homeLocation.getWorld();
-                if (homeWorld == null) {
-                    continue;
-                }
-                blueMap.getWorld(homeWorld.getUID()).ifPresent(blueWorld -> blueWorld.getMaps().forEach(map -> {
-                    final MarkerSet markerSetHomes = map.getMarkerSets().getOrDefault(
-                            MARKERSET_ID_HOMES,
-                            MarkerSet.builder()
-                                    .label(MARKERSET_LABEL_HOMES)
-                                    .defaultHidden(true)
-                                    .toggleable(true)
-                                    .build()
-                    );
-                    String homeMarkerId = String.format("home:%s:%s", user.getName(), home);
-                    Vector3d homeMarkerPos = Vector3d.from(homeLocation.getX(), homeLocation.getY(), homeLocation.getZ());
-                    POIMarker homeMarker = POIMarker.builder()
-                            .label(homeLabelFormat.replace("%home%", home).replace("%player%", user.getName()))
-                            .icon(getMarkerURL(map, ICON_ID_HOMES), Vector2i.from(18, 18))
-                            .position(homeMarkerPos)
-                            .build();
-                    markerSetHomes.getMarkers().put(homeMarkerId, homeMarker);
-                    map.getMarkerSets().put(MARKERSET_ID_HOMES, markerSetHomes);
 
-                    markerSetHomes.
-                }));
+                if (homeLocation == null || homeLocation.getWorld() == null) continue;
+
+                World homeWorld = homeLocation.getWorld();
+
+                blueMap.getWorld(homeWorld.getUID()).ifPresent(blueWorld ->
+                        blueWorld.getMaps().forEach(map -> {
+
+                            // Ensure marker set exists
+                            MarkerSet markerSetHomes = map.getMarkerSets().get(MARKERSET_ID_HOMES);
+                            if (markerSetHomes == null) {
+                                markerSetHomes = MarkerSet.builder()
+                                        .label(MARKERSET_LABEL_HOMES)
+                                        .defaultHidden(true)
+                                        .toggleable(true)
+                                        .build();
+                                map.getMarkerSets().put(MARKERSET_ID_HOMES, markerSetHomes);
+                            }
+
+                            String homeMarkerId = String.format("home:%s:%s", user.getName(), home);
+                            Vector3d homeMarkerPos = Vector3d.from(
+                                    homeLocation.getX(),
+                                    homeLocation.getY(),
+                                    homeLocation.getZ()
+                            );
+
+                            POIMarker homeMarker = POIMarker.builder()
+                                    .label(homeLabelFormat
+                                            .replace("%home%", home)
+                                            .replace("%player%", user.getName()))
+                                    .icon(getMarkerURL(map, ICON_ID_HOMES), Vector2i.from(18, 18))
+                                    .position(homeMarkerPos)
+                                    .build();
+
+                            markerSetHomes.getMarkers().put(homeMarkerId, homeMarker);
+                        })
+                );
             }
         }
     }
+
 
     private void removeMarkers() {
         if (essentials == null) {
