@@ -194,7 +194,14 @@ public final class BlueMapEssentials extends JavaPlugin {
                     continue;
                 }
                 blueMap.getWorld(homeWorld.getUID()).ifPresent(blueWorld -> blueWorld.getMaps().forEach(map -> {
-                    final MarkerSet markerSetHomes = map.getMarkerSets().getOrDefault(MARKERSET_ID_HOMES, MarkerSet.builder().label(MARKERSET_LABEL_HOMES).build());
+                    final MarkerSet markerSetHomes = map.getMarkerSets().getOrDefault(
+                            MARKERSET_ID_HOMES,
+                            MarkerSet.builder()
+                                    .label(MARKERSET_LABEL_HOMES)
+                                    .defaultHidden(true)
+                                    .toggleable(true)
+                                    .build()
+                    );
                     String homeMarkerId = String.format("home:%s:%s", user.getName(), home);
                     Vector3d homeMarkerPos = Vector3d.from(homeLocation.getX(), homeLocation.getY(), homeLocation.getZ());
                     POIMarker homeMarker = POIMarker.builder()
@@ -204,6 +211,8 @@ public final class BlueMapEssentials extends JavaPlugin {
                             .build();
                     markerSetHomes.getMarkers().put(homeMarkerId, homeMarker);
                     map.getMarkerSets().put(MARKERSET_ID_HOMES, markerSetHomes);
+
+                    markerSetHomes.
                 }));
             }
         }
