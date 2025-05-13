@@ -93,6 +93,12 @@ public final class BlueMapEssentials extends JavaPlugin {
 
     private void copyResourceToBlueMapWebApp(final Path webroot, final String fromResource, final String toAsset) throws IOException {
         final Path toPath = webroot.resolve("assets").resolve(toAsset);
+
+        // Skip if the file already exists
+        if (Files.exists(toPath)) {
+            return;
+        }
+
         Files.createDirectories(toPath.getParent());
         try (
                 final InputStream in = getResource(fromResource);
